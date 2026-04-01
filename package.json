@@ -1,0 +1,39 @@
+{
+  "name": "zorvyn",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/iamsurajthakur/Zorvyn#readme",
+  "bugs": {
+    "url": "https://github.com/iamsurajthakur/Zorvyn/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iamsurajthakur/Zorvyn.git"
+  },
+  "license": "ISC",
+  "author": "Suraj Thakur",
+  "type": "commonjs",
+  "main": "server.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.3.3",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
