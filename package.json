@@ -12,7 +12,7 @@
   },
   "license": "ISC",
   "author": "Suraj Thakur",
-  "type": "commonjs",
+  "type": "module",
   "main": "server.js",
   "directories": {
     "doc": "docs"
