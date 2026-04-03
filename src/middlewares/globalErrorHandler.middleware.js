@@ -1,4 +1,4 @@
-import ApiError from "../utils/ApiError"
+import ApiError from "../utils/ApiError.js"
 
 const errorHandler = (err, req, res, _next) => {
     let error = err

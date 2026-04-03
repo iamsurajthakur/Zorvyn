@@ -1,6 +1,6 @@
 import z from "zod"
 
-export const userRoleEnum = z.enum(['viewer','analyst','admin'])
+export const userRoleEnum = z.enum(['VIEWER','ANALYST','ADMIN'])
 
 export const createUserSchema = z.object({
     name: z.string().min(2).max(50),
@@ -14,7 +14,7 @@ export const createUserSchema = z.object({
         .regex(/[A-Z]/, "Must include uppercase letter")
         .regex(/[0-9]/, "Must include a number"),
 
-    role: userRoleEnum.default('viewer'),
+    role: userRoleEnum.default('VIEWER'),
 
     isActive: z.boolean().optional().default(true)
 })
