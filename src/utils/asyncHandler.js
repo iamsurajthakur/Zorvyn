@@ -1,5 +1,5 @@
-const asyncHandler = (requestHandler) = (_req, _res, next) => {
-    Promise.resolve(requestHandler(next)).catch((error) => next(error))
+const asyncHandler = (requestHandler) => (req, res, next) => {
+    Promise.resolve(requestHandler(req, res, next)).catch((error) => next(error))
 }
 
 export default asyncHandler
