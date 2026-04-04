@@ -6,7 +6,7 @@ const validate = (schema) => (req, _res, next) => {
         query: req.query,
         params: req.params,
     })
-
+    console.log(result)
     if(!result.success){
         return next(
             new ApiError(400, 'Validation failed', result.error.flatten().fieldErrors)
