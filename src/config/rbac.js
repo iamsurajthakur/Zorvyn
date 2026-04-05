@@ -8,12 +8,12 @@ const {
 
 export const ROLE_PERMISSIONS = {
     VIEWER: [
-    RECORDS_READ,                  // can only view records€
+    DASHBOARD_READ,                  
   ],
 
   ANALYST: [
-    RECORDS_READ,                  // view records
-    DASHBOARD_READ,                // access insights/dashboard
+    RECORDS_READ,
+    DASHBOARD_READ,      
   ],
 
   ADMIN: [
