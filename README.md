@@ -132,11 +132,11 @@ zorvyn/
 
 ### 3. **Financial Record Management**
 
-- Record types: INCOME, EXPENSE
+- Supports two record types: INCOME and EXPENSE
 - 14 predefined categories:
   - Income: salary, freelance, investment, business, rental, other_income
   - Expense: rent, food, utilities, transport, healthcare, education, entertainment, shopping, other_expense
-- Soft delete support
+- Soft delete mechanism to preserve historical data while excluding it from active queries
 - Audit trail tracking (createdBy, updatedBy, timestamps)
 - Optional descriptions (up to 500 chars)
 
@@ -893,15 +893,13 @@ throw new ApiError(
 
 ## Security Features
 
-- ✅ **Password Hashing**: bcryptjs with 10 salt rounds
-- ✅ **JWT Tokens**: Cryptographically signed, expiring tokens
-- ✅ **RBAC**: Fine-grained permission checks on all protected routes
-- ✅ **Input Validation**: Zod schema validation before processing
-- ✅ **HTTP Headers**: Helmet middleware sets security headers
-- ✅ **CORS**: Configurable cross-origin request handling
-- ✅ **Soft Delete**: No permanent data loss, maintains audit trail
-- ✅ **Error Handling**: No stack traces or sensitive info leaked
-- ✅ **Account Status**: Can deactivate users, track last login
+- **Password Hashing**: bcryptjs with 10 salt rounds
+- **JWT Tokens**: Cryptographically signed, expiring tokens
+- **RBAC**: Fine-grained permission checks on all protected routes
+- **Input Validation**: Zod schema validation before processing
+- **Soft Delete**: No permanent data loss, maintains audit trail
+- **Error Handling**: No stack traces or sensitive info leaked
+- **Account Status**: Can deactivate users, track last login
 
 ---
 
