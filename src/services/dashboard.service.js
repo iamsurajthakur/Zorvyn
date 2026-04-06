@@ -164,12 +164,12 @@ export const getMonthlyTrends = async ({ from, to, groupBy = 'month' }) => {
     entries.forEach(({ type, total, count }) => {
         const key = type === 'INCOME' ? 'income' : 'expense'
         period[key] = {
-        total: parseFloat((total / 100).toFixed(2)),  // ✅
+        total: parseFloat((total / 100).toFixed(2)),
         count
         }
   })
 
-  period.net = parseFloat((period.income.total - period.expense.total).toFixed(2))  // ✅
+  period.net = parseFloat((period.income.total - period.expense.total).toFixed(2))
 
   return period
 })

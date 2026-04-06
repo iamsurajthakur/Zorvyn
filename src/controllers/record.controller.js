@@ -59,7 +59,7 @@ export const updateRecord = asyncHandler(async (req, res) => {
   const record = await recordService.updateRecord(
     id,
     req.validatedData.body,
-    req.user._id   // ✅ pass userId for updatedBy tracking
+    req.user._id
   )
   return res
     .status(200)
