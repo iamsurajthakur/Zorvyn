@@ -680,7 +680,6 @@ throw new ApiError(
 
 ```bash
 # Server Configuration
-NODE_ENV=development              # development|production
 PORT=5000                        # Server port
 
 # Database
@@ -692,11 +691,7 @@ REFRESH_TOKEN_SECRET=...         # JWT refresh token secret (min 32 chars)
 ACCESS_TOKEN_EXPIRY=15m          # Access token lifetime
 REFRESH_TOKEN_EXPIRY=7d          # Refresh token lifetime
 
-# CORS
-CORS_ORIGIN=http://localhost:3000  # Allowed origins
-
-# Logging
-LOG_LEVEL=debug                  # debug|info|warn|error
+NODE_ENV=development or production
 ```
 
 ---
