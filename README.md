@@ -583,9 +583,12 @@ Server runs on `http://localhost:5000` by default.
 
 ---
 
+## API Testing
 
+You can import the provided Postman collection to test all endpoints:
 
-
+- File: `Zorvyn.postman_collection.json`
+- Import via Postman → File → Import → Select JSON
 
 ## Error Handling
 
