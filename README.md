@@ -36,8 +36,6 @@ Zorvyn is a backend API service designed to manage personal and organizational f
 | **Auth**       | JSON Web Token | ^9.0.3  | Token-based authentication      |
 | **Password**   | bcryptjs       | ^3.0.3  | Password hashing & verification |
 | **Validation** | Zod            | ^4.3.6  | Schema validation               |
-| **Security**   | Helmet         | ^8.1.0  | HTTP headers hardening          |
-| **CORS**       | cors           | ^2.8.6  | Cross-origin requests           |
 | **API Docs**   | Swagger UI     | ^5.0.1  | API documentation               |
 | **Env**        | dotenv         | ^17.3.1 | Environment config              |
 | **Dev**        | Nodemon        | ^3.1.14 | Development auto-reload         |
