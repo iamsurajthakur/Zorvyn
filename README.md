@@ -26,31 +26,31 @@ Zorvyn is a backend API service designed to manage personal and organizational f
 ---
 
 ## Tech Stack
-    
-    | Layer          | Technology     | Version | Purpose                         |
-    | -------------- | -------------- | ------- | ------------------------------- |
-    | **Runtime**    | Node.js        | -       | JavaScript runtime              |
-    | **Framework**  | Express.js     | ^5.2.1  | HTTP server & routing           |
-    | **Database**   | MongoDB        | -       | NoSQL data storage              |
-    | **ODM**        | Mongoose       | ^9.3.3  | MongoDB object model            |
-    | **Auth**       | JSON Web Token | ^9.0.3  | Token-based authentication      |
-    | **Password**   | bcryptjs       | ^3.0.3  | Password hashing & verification |
-    | **Validation** | Zod            | ^4.3.6  | Schema validation               |
-    | **Security**   | Helmet         | ^8.1.0  | HTTP headers hardening          |
-    | **CORS**       | cors           | ^2.8.6  | Cross-origin requests           |
-    | **API Docs**   | Swagger UI     | ^5.0.1  | API documentation               |
-    | **Env**        | dotenv         | ^17.3.1 | Environment config              |
-    | **Dev**        | Nodemon        | ^3.1.14 | Development auto-reload         |
-    
-    **Design Rationale**:
-    
-    - **Express.js**: Minimal footprint, large ecosystem, perfect for business logic layer
-    - **MongoDB**: Flexible schema for financial categories, horizontal scalability
-    - **Mongoose**: Schema validation, relationships, lifecycle hooks
-    - **JWT**: Stateless, scalable authentication without session store
-    - **Zod**: TypeScript-first but works great in pure JS projects, exceptional error messages
-    - **Helmet**: Automatically sets security-related HTTP headers
-    
+
+| Layer          | Technology     | Version | Purpose                         |
+| -------------- | -------------- | ------- | ------------------------------- |
+| **Runtime**    | Node.js        | -       | JavaScript runtime              |
+| **Framework**  | Express.js     | ^5.2.1  | HTTP server & routing           |
+| **Database**   | MongoDB        | -       | NoSQL data storage              |
+| **ODM**        | Mongoose       | ^9.3.3  | MongoDB object model            |
+| **Auth**       | JSON Web Token | ^9.0.3  | Token-based authentication      |
+| **Password**   | bcryptjs       | ^3.0.3  | Password hashing & verification |
+| **Validation** | Zod            | ^4.3.6  | Schema validation               |
+| **Security**   | Helmet         | ^8.1.0  | HTTP headers hardening          |
+| **CORS**       | cors           | ^2.8.6  | Cross-origin requests           |
+| **API Docs**   | Swagger UI     | ^5.0.1  | API documentation               |
+| **Env**        | dotenv         | ^17.3.1 | Environment config              |
+| **Dev**        | Nodemon        | ^3.1.14 | Development auto-reload         |
+
+**Design Rationale**:
+
+- **Express.js**: Minimal footprint, large ecosystem, perfect for business logic layer
+- **MongoDB**: Flexible schema for financial categories, horizontal scalability
+- **Mongoose**: Schema validation, relationships, lifecycle hooks
+- **JWT**: Stateless, scalable authentication without session store
+- **Zod**: TypeScript-first but works great in pure JS projects, exceptional error messages
+- **Helmet**: Automatically sets security-related HTTP headers
+
 ---
 
 ## Project Structure
