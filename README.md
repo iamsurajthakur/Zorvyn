@@ -676,22 +676,4 @@ throw new ApiError(
 
 ---
 
-## Environment Variables
 
-```bash
-# Server Configuration
-PORT=5000                        # Server port
-
-# Database
-MONGODB_URI=mongodb://...        # MongoDB connection string
-
-# Authentication
-ACCESS_TOKEN_SECRET=...          # JWT access token secret (min 32 chars)
-REFRESH_TOKEN_SECRET=...         # JWT refresh token secret (min 32 chars)
-ACCESS_TOKEN_EXPIRY=15m          # Access token lifetime
-REFRESH_TOKEN_EXPIRY=7d          # Refresh token lifetime
-
-NODE_ENV=development or production
-```
-
----
