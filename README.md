@@ -219,6 +219,23 @@ ADMIN     | ✓            | ✓      | ✓    | ✓      | ✓              | �
 
 ---
 
+## API Documentation
+
+All API endpoints are documented within the provided Postman collection. Each request in the collection includes:
+
+- Endpoint URL and HTTP method
+- Required headers and authentication
+- Request body schema and examples
+- Sample responses with status codes
+
+### How to use
+ 1. Import the postman collection: Zorvyn.postman_collection.json
+ 2. Open in Postman → Each request contains detailed documentation and example payloads
+ 3. Execute requests directly from Postman for testing
+
+> Note: While a Swagger/OpenAPI UI is not included, the Postman collection serves as a fully functional reference for all API operations.
+
+
 
 ## Database Design
 
