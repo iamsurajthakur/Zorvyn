@@ -1,0 +1,702 @@
+{
+  "info": {
+    "_postman_id": "0ce74f4b-25cc-4963-8f4a-09dc349c6986",
+    "name": "Zorvyn",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "47986279",
+    "_collection_link": "https://go.postman.co/collection/47986279-0ce74f4b-25cc-4963-8f4a-09dc349c6986?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/auth/register",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "### Purpose\nCreates a new user account.\n\n### Endpoint\n`POST {{server}}/auth/register`\n\n### Environment variables\n- `{{server}}`: Base URL of the API (for example `http://localhost:3000` or `https://api.yourdomain.com`).\n\n### Required headers\n- `Content-Type: application/json`\n- `Accept: application/json` (recommended)\n\n> Note: This request does not include authentication headers.\n\n### Request body (JSON)\n| Field | Type | Required | Description |\n|---|---:|:---:|---|\n| `fullName` | string | Yes | User’s full name. |\n| `email` | string | Yes | User’s email address (should be unique). |\n| `password` | string | Yes | Password for the account. |\n| `confirmPassword` | string | Yes | Must match `password`. |\n\n#### Example request body\n```json\n{\n  \"fullName\": \"Rahul Nayak\",\n  \"email\": \"rahul@gmail.com\",\n  \"password\": \"rahul\",\n  \"confirmPassword\": \"rahul\"\n}\n```\n\n### Example cURL\n```bash\ncurl --request POST \"{{server}}/auth/register\" \\\n  --header \"Content-Type: application/json\" \\\n  --data '{\n    \"fullName\": \"Rahul Nayak\",\n    \"email\": \"rahul@gmail.com\",\n    \"password\": \"rahul\",\n    \"confirmPassword\": \"rahul\"\n  }'\n```\n\n### Example responses\n> No saved examples / latest response were found in this tab. Below are typical shapes—adjust to match your API.\n\n#### 201 Created (typical)\n```json\n{\n  \"message\": \"User registered successfully\",\n  \"user\": {\n    \"id\": \"<user-id>\",\n    \"fullName\": \"Rahul Nayak\",\n    \"email\": \"rahul@gmail.com\"\n  }\n}\n```\n\n#### 400 Bad Request (validation error)\n```json\n{\n  \"message\": \"Validation failed\",\n  \"errors\": [\n    {\n      \"field\": \"confirmPassword\",\n      \"message\": \"confirmPassword must match password\"\n    }\n  ]\n}\n```\n\n### Status codes & errors\n- **201 Created**: Account created.\n- **400 Bad Request**: Missing/invalid fields (for example email format, password mismatch).\n- **409 Conflict**: Email already exists (if implemented).\n- **415 Unsupported Media Type**: Missing/incorrect `Content-Type`.\n- **500 Internal Server Error**: Unexpected server error.\n"
+          },
+          "response": []
+        },
+        {
+          "name": "login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"admin@test.com\",\r\n    \"password\": \"Admin123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{server}}/auth/login",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "## Purpose\nLogs a user into the Zorvyn backend and returns an access token (and possibly other user/session data). Use this token as a **Bearer** token for authenticated endpoints.\n\n## Base URL / variable usage\nThis request uses the environment variable `{{server}}` as the API base URL:\n- **POST** `{{server}}/auth/login`\n\nMake sure the active environment (currently **Zorvyn**) defines `server`, for example:\n- `server = https://api.your-domain.com` (example)\n\n## Authentication requirements\n- **This endpoint typically does not require an Authorization header** (you are obtaining a token).\n- On success, the API returns a token. Store and reuse it as:\n  - `Authorization: Bearer <token>` for protected requests.\n\n### How tokens are set/used in this workspace\nThe active environment contains token variables:\n- `adminToken`\n- `analystToken`\n- `viewerToken`\n\nSuggested usage pattern:\n1. Run this `login` request with the credentials for a given role.\n2. Copy the returned token into the matching environment variable (e.g., `adminToken`).\n3. Other requests should reference these via `Bearer {{adminToken}}` / `Bearer {{analystToken}}` / `Bearer {{viewerToken}}`.\n\n> Note: This request currently has **no scripts** to auto-save tokens; token capture is manual unless you add scripts later.\n\n## Request headers\nNo headers are explicitly set in this request.\n\nCommon expectations (your server may enforce these automatically):\n- `Content-Type: application/json`\n- `Accept: application/json`\n\n## Request body\n**Content-Type:** `application/json`\n\n### Schema\n```json\n{\n  \"email\": \"string (required)\",\n  \"password\": \"string (required)\"\n}\n```\n\n### Example (as configured)\n```json\n{\n  \"email\": \"admin@test.com\",\n  \"password\": \"Admin123\"\n}\n```\n\n## Expected responses\nResponse shapes vary by implementation; below are common patterns.\n\n### 200 OK (success)\nTypically returns a token and user info.\n\nExample:\n```json\n{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"123\",\n    \"email\": \"admin@test.com\",\n    \"role\": \"admin\"\n  }\n}\n```\n\n### 400 Bad Request (validation error)\nMissing/invalid email/password.\n\nExample:\n```json\n{\n  \"message\": \"Email and password are required\"\n}\n```\n\n### 401 Unauthorized (invalid credentials)\nWrong email/password.\n\nExample:\n```json\n{\n  \"message\": \"Invalid credentials\"\n}\n```\n\n### 429 Too Many Requests (rate limit) (if enabled)\nExample:\n```json\n{\n  \"message\": \"Too many login attempts. Please try again later.\"\n}\n```\n\n### 500 Internal Server Error\nExample:\n```json\n{\n  \"message\": \"Internal server error\"\n}\n```\n\n## Environment variable notes\n- `server` is required for the URL (`{{server}}/auth/login`).\n- `adminToken` / `analystToken` / `viewerToken` are intended to store Bearer tokens returned from login for different roles.\n- `recordId` is available in the environment but is **not used by this request**; it is likely used by record-specific endpoints elsewhere in the collection.\n"
+          },
+          "response": []
+        },
+        {
+          "name": "logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/auth/logout",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "## Purpose\nLogs out the currently authenticated user by invalidating the active session/token on the server.\n\n## Endpoint\n- **Method:** `POST`\n- **URL:** `{{server}}/auth/logout`\n\n## Authentication\nThis request is intended to be called **as an authenticated user**.\n\n- **Assumption (minimal):** The API uses a Bearer JWT (or similar) in the `Authorization` header.\n- **How to send:** `Authorization: Bearer {{adminToken}}` (or another role token such as `{{analystToken}}` / `{{viewerToken}}`).\n\n> Note: The current saved request configuration does not include an explicit auth helper or saved `Authorization` header, so the header below must be added by the caller (or inherited from a parent folder/collection).\n\n## Headers\n### Required\n- `Authorization: Bearer <token>` *(assumed required for logout)*\n\n### Optional\n- `Content-Type: application/json` *(only relevant if a body is sent; this endpoint is typically body-less)*\n\n## Request Body\n- **Body:** None in the current request configuration.\n- **Assumption (minimal):** Logout does not require a request body.\n\n## Expected Responses\n*(Exact response bodies are not defined in this request; below are typical expectations.)*\n\n- **200 OK** — Logout successful (session/token invalidated).\n- **401 Unauthorized** — Missing/invalid/expired token.\n- **403 Forbidden** — Authenticated but not permitted (less common for logout).\n- **500 Internal Server Error** — Unexpected server error.\n\n## cURL example\nUsing an environment variable for the server and a token variable:\n\n```bash\ncurl --request POST \"{{server}}/auth/logout\" \\\n  --header \"Authorization: Bearer {{adminToken}}\"\n```\n\nIf your API expects JSON (only if required by your backend):\n\n```bash\ncurl --request POST \"{{server}}/auth/logout\" \\\n  --header \"Authorization: Bearer {{adminToken}}\" \\\n  --header \"Content-Type: application/json\"\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "getMe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/auth/logout",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "## Purpose\nLogs out the currently authenticated user by invalidating their session/token.\n\n## Request\n**Method:** `GET`\n\n**URL:** `{{server}}/auth/logout`\n\n## Authentication\nRequires an authenticated user.\n\n- **Type:** Bearer token (recommended)\n- Provide one of the environment tokens (for example `{{adminToken}}`, `{{analystToken}}`, or `{{viewerToken}}`) as a Bearer token.\n\nExample:\n```\nAuthorization: Bearer {{adminToken}}\n```\n\n## Headers\n| Header | Required | Description |\n|---|---:|---|\n| `Authorization` | Yes | `Bearer <token>` for the user to be logged out |\n| `Content-Type` | No | Not required for this `GET` request |\n\n## Query Params\nNone.\n\n## Path Params\nNone.\n\n## Example Response (Success)\n**Status:** `200 OK`\n\nResponse body shape depends on the API implementation; commonly it returns a success message.\n\nExample:\n```json\n{\n  \"success\": true,\n  \"message\": \"Logged out\"\n}\n```\n\n## Common Error Codes\n- **400 Bad Request** — Request cannot be processed (e.g., malformed auth header)\n- **401 Unauthorized** — Missing/invalid/expired token\n- **403 Forbidden** — Authenticated but not allowed\n- **500 Internal Server Error** — Unexpected server error\n\n## Notes\n- After a successful logout, the same token/session should no longer be usable for authenticated endpoints."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "getAllUsers",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/users/getAllUsers",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "users",
+                "getAllUsers"
+              ]
+            },
+            "description": "## Purpose\nRetrieve a list of all users.\n\nThis request is typically used by admin/authorized roles to view user directory data.\n\n## Endpoint\n- **Method:** `GET`\n- **URL:** `{{server}}/users/getAllUsers`\n\n## Authentication\nThis endpoint is expected to be protected.\n\n- **Auth type (recommended):** Bearer Token\n- **Header:** `Authorization: Bearer <token>`\n\nIn this workspace/environment, you can supply a token via one of these environment variables (depending on the role you want to test with):\n- `{{adminToken}}`\n- `{{analystToken}}`\n- `{{viewerToken}}`\n\n> Note: This request currently has **no request-level auth configured** in Postman. Add the `Authorization` header manually (or set auth at the folder/collection level) when you run it.\n\n## Headers\n### Required\n- `Authorization: Bearer <token>` (required when the API enforces authentication)\n\n### Optional\n- `Accept: application/json`\n- `Content-Type: application/json` (generally not required for a GET request, but may be set by some clients)\n\n## Query parameters\nNone.\n\n## Example request\n### Using environment variables\n```http\nGET {{server}}/users/getAllUsers\nAuthorization: Bearer {{adminToken}}\nAccept: application/json\n```\n\n### cURL\n```bash\ncurl --request GET \"{{server}}/users/getAllUsers\" \\\n  --header \"Authorization: Bearer {{adminToken}}\" \\\n  --header \"Accept: application/json\"\n```\n\n## Example 200 response (schema)\nStatus: **200 OK**\n\nThe exact shape depends on the API implementation, but commonly returns a JSON array of user objects or an envelope containing an array.\n\n### Option A — Array response\n```json\n[\n  {\n    \"id\": \"string\",\n    \"name\": \"string\",\n    \"email\": \"string\",\n    \"role\": \"string\",\n    \"createdAt\": \"string (ISO-8601)\",\n    \"updatedAt\": \"string (ISO-8601)\"\n  }\n]\n```\n\n### Option B — Envelope response\n```json\n{\n  \"data\": [\n    {\n      \"id\": \"string\",\n      \"name\": \"string\",\n      \"email\": \"string\",\n      \"role\": \"string\",\n      \"createdAt\": \"string (ISO-8601)\",\n      \"updatedAt\": \"string (ISO-8601)\"\n    }\n  ],\n  \"meta\": {\n    \"count\": 0\n  }\n}\n```\n\n## Error codes\nCommon responses you may encounter:\n- **400 Bad Request** — Invalid request (unexpected query params or malformed input)\n- **401 Unauthorized** — Missing/invalid/expired token\n- **403 Forbidden** — Authenticated but insufficient permissions to list users\n- **404 Not Found** — Endpoint not found (base URL or route mismatch)\n- **429 Too Many Requests** — Rate limited\n- **500 Internal Server Error** — Server-side error\n\n## Notes on environment variables\nThis request uses the following variables:\n- `{{server}}` — Base URL of the API server (for example `http://localhost:3000` or `https://api.yourdomain.com`).\n\nAvailable role tokens in the active environment (**Zorvyn**) that you can use for the `Authorization` header:\n- `{{adminToken}}`, `{{analystToken}}`, `{{viewerToken}}`\n\n(Other available variables in this environment: `{{recordId}}` — not used by this request.)\n"
+          },
+          "response": []
+        },
+        {
+          "name": "getUserById",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWQxM2Q2MzJlMmJjMjcwNGUwZmY3MzMiLCJpYXQiOjE3NzUzMjE2NzIsImV4cCI6MTc3NTQwODA3Mn0.Oeniq7ad-cngA5L4y3l0mlEJRK-QAgysc5FX7xLrI04",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/users/getUserById/69d14075d559f6ecec7406ac",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "users",
+                "getUserById",
+                "69d14075d559f6ecec7406ac"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "69d13d632e2bc2704e0ff733",
+                  "type": "text",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "## Purpose\nFetch a single user resource by its unique identifier.\n\nThis request calls the **Get User By ID** endpoint and returns the user record associated with the provided user id.\n\n---\n## Endpoint\n**GET** `{{server}}/users/getUserById/:id`\n\n- Base URL is taken from the active environment variable: `{{server}}` (Environment: **Zorvyn**).\n\n---\n## Parameters\n### Path parameters (required)\n- `id` *(string, required)*: The user’s unique identifier.\n\n> In the currently configured URL, the `:id` path segment is set to:\n> `69d14075d559f6ecec7406ac`\n\n### Query parameters (optional / not used by default)\nA query parameter named `id` exists in this request but is **currently disabled** in Params.\n- `id` *(string)*: If enabled, it would send `?id=<value>`.\n\n> **Note:** Prefer the **path parameter** version (`/getUserById/:id`) unless your API explicitly supports the query param variant.\n\n---\n## Authentication\nThis request does not have request-level auth configured.\n\nIf your API is protected, you will typically need an `Authorization` header such as:\n\n- `Authorization: Bearer {{adminToken}}`\n\nOther available tokens in the active environment:\n- `{{analystToken}}`\n- `{{viewerToken}}`\n\n(Use the token appropriate for the role/permissions required by your backend.)\n\n---\n## Expected responses\nCommon outcomes for a “get by id” endpoint:\n\n- **200 OK** — User found; returns the user object.\n- **400 Bad Request** — Invalid/malformed id.\n- **401 Unauthorized** — Missing/invalid credentials (if auth is enforced).\n- **403 Forbidden** — Authenticated but not permitted to view the user.\n- **404 Not Found** — No user exists for the provided id.\n- **500 Internal Server Error** — Unexpected server failure.\n\n---\n## Example usage\n### 1) Using the current hard-coded path id\nSend:\n\n`GET {{server}}/users/getUserById/69d14075d559f6ecec7406ac`\n\n### 2) Using an environment variable for the id\n1. Set `recordId` in the active environment (**Zorvyn**) to the target user id.\n2. Update the request URL path to use it (example):\n\n`GET {{server}}/users/getUserById/{{recordId}}`\n\n### 3) cURL equivalent (if bearer auth is required)\n```bash\ncurl --request GET \\\n  --url \"{{server}}/users/getUserById/69d14075d559f6ecec7406ac\" \\\n  --header \"Authorization: Bearer {{adminToken}}\"\n```\n\n---\n## Notes\n- Ensure `{{server}}` points to the correct environment (dev/stage/prod).\n- If you see **404**, confirm the id exists and that you are calling the right environment/base URL.\n- If you see **401/403**, verify you’re using the correct token and required permissions."
+          },
+          "response": []
+        },
+        {
+          "name": "createUser",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWQxM2Q2MzJlMmJjMjcwNGUwZmY3MzMiLCJpYXQiOjE3NzUzMjE2NzIsImV4cCI6MTc3NTQwODA3Mn0.Oeniq7ad-cngA5L4y3l0mlEJRK-QAgysc5FX7xLrI04",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"krish\",\r\n    \"email\": \"krish@gmail.com\",\r\n    \"password\": \"Krish123\",\r\n    \"role\": \"ANALYST\",\r\n    \"isActive\": true\r\n    \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{server}}/users/createUser",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "users",
+                "createUser"
+              ]
+            },
+            "description": "## Purpose\nCreate a new user in the Zorvyn system.\n\nThis request is typically used by an admin (or a privileged service) to provision a user account with a role and activation status.\n\n---\n## Endpoint\n**POST** `{{server}}/users/createUser`\n\n- Base URL is taken from the active environment variable: `{{server}}` (Environment: `Zorvyn`).\n\n---\n## Authentication\nThis endpoint commonly requires an access token.\n\nIn Postman, prefer using an environment variable for the token, for example:\n\n- `Authorization: Bearer {{adminToken}}`\n\nIf your API allows other roles to create users, swap in the appropriate environment token variable:\n- `{{analystToken}}`\n- `{{viewerToken}}`\n\n> Note: This request currently has no headers configured. If your backend requires auth, add the `Authorization` header as shown above (without hardcoding tokens).\n\n---\n## Request Body (JSON)\n**Content-Type:** `application/json`\n\n### Fields\nRequired (typical):\n- `name` (string): User’s display/name.\n- `email` (string): User’s email address (usually must be unique).\n- `password` (string): Initial password.\n- `role` (string): User role (example shown: `ANALYST`).\n\nOptional / conditional:\n- `isActive` (boolean): Whether the user is active immediately.\n\n### Example\n```json\n{\n  \"name\": \"krish\",\n  \"email\": \"krish@gmail.com\",\n  \"password\": \"Krish123\",\n  \"role\": \"ANALYST\",\n  \"isActive\": true\n}\n```\n\n---\n## Expected Responses\n### Success\nCommon successful outcomes include:\n- **201 Created**: User created successfully.\n- **200 OK**: User created successfully (some APIs return 200).\n\nResponse body typically contains the created user object and/or an identifier.\n\n### Common Errors\n- **400 Bad Request**: Validation failed (missing/invalid fields, weak password, invalid role).\n- **401 Unauthorized**: Missing/invalid token.\n- **403 Forbidden**: Authenticated but not permitted to create users (insufficient role).\n- **409 Conflict**: Email already exists / duplicate user.\n- **500 Internal Server Error**: Unexpected server error.\n\n---\n## Notes\n- Keep secrets out of the request body wherever possible; if passwords are required, avoid committing real credentials.\n- Use environment variables for server and tokens (`{{server}}`, `{{adminToken}}`, etc.) rather than hardcoding.\n- If you want to chain requests, capture a returned user id/email in tests and store it as a variable for later steps."
+          },
+          "response": []
+        },
+        {
+          "name": "updateUserRole",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWQxM2Q2MzJlMmJjMjcwNGUwZmY3MzMiLCJpYXQiOjE3NzUzMjI0OTksImV4cCI6MTc3NTQwODg5OX0.az-yNTEU7grmKFqPRIosPeYijB52DF_4Y3jPHPHCMUk",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"role\": \"ADMIN\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{server}}/users/updateUserRole/69d14075d559f6ecec7406ac/role",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "users",
+                "updateUserRole",
+                "69d14075d559f6ecec7406ac",
+                "role"
+              ]
+            },
+            "description": "## Purpose\nUpdate an existing user’s authorization role in the system.\n\nUse this endpoint to promote/demote a user (e.g., Viewer → Analyst → Admin) by setting a new `role` value.\n\n---\n## Endpoint\n- **Method:** `PATCH`\n- **URL:** `{{server}}/users/updateUserRole/:userId/role`\n\n### Path parameters\n| Name | Type | Required | Description |\n|------|------|----------|-------------|\n| `userId` | string (ObjectId) | yes | Target user whose role will be updated. |\n\n**Example URL (as currently configured in this request):**\n```\n{{server}}/users/updateUserRole/69d14075d559f6ecec7406ac/role\n```\n\n---\n## Authentication\nThis endpoint requires an access token.\n\nIn this workspace you have these environment variables available:\n- `{{adminToken}}` — admin-level token (recommended for role changes)\n- `{{analystToken}}` — analyst-level token\n- `{{viewerToken}}` — viewer-level token\n\n### Expected auth header\nConfigure the request to send (pattern shown; exact scheme depends on your backend):\n- `Authorization: Bearer <token>`\n\n**Typical usage:**\n- Use `{{adminToken}}` when changing roles.\n\n---\n## Request body\n- **Content-Type:** `application/json`\n\n### Schema\n```json\n{\n  \"role\": \"<ROLE>\"\n}\n```\n\n| Field | Type | Required | Description |\n|------|------|----------|-------------|\n| `role` | string | yes | The role to assign to the user. |\n\n### Example (as currently configured)\n```json\n{\n  \"role\": \"ADMIN\"\n}\n```\n\n---\n## Response expectations\n> Response shape may vary by service implementation; validate against your backend.\n\n### Success\n- **Expected status:** `200 OK` (sometimes `204 No Content` depending on implementation)\n- **Expected behavior:**\n  - The user’s role is updated to the provided value.\n  - Response may include the updated user object or a success message.\n\n### Common error responses\n- **`400 Bad Request`**\n  - Missing/invalid `role`, malformed JSON, or invalid `userId` format.\n- **`401 Unauthorized`**\n  - Missing/expired token.\n- **`403 Forbidden`**\n  - Token is valid but does not have permission to change roles (e.g., non-admin attempting role changes).\n- **`404 Not Found`**\n  - User with `userId` does not exist.\n- **`409 Conflict`** (optional)\n  - Role change violates business rules (e.g., last remaining admin cannot be demoted).\n- **`500 Internal Server Error`**\n  - Unexpected server failure.\n\n---\n## Role values & permissions notes\n- Role values are typically an **enum** such as: `ADMIN`, `ANALYST`, `VIEWER`.\n- **ADMIN**: full access, including user/role management.\n- **ANALYST**: can analyze/operate on records but usually cannot manage users/roles.\n- **VIEWER**: read-only access.\n\nIf your backend enforces stricter rules (e.g., only admins can change roles, cannot demote the last admin, etc.), expect a `403` or `409` accordingly.\n"
+          },
+          "response": []
+        },
+        {
+          "name": "updateUserStatus",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWQxM2Q2MzJlMmJjMjcwNGUwZmY3MzMiLCJpYXQiOjE3NzUzMjI0OTksImV4cCI6MTc3NTQwODg5OX0.az-yNTEU7grmKFqPRIosPeYijB52DF_4Y3jPHPHCMUk",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"isActive\": false\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{server}}/users/updateUserStatus/69d14075d559f6ecec7406ac/status",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "users",
+                "updateUserStatus",
+                "69d14075d559f6ecec7406ac",
+                "status"
+              ]
+            },
+            "description": "Updates a user's **active status** (enable/disable) for a specific user.\n\n**Endpoint**: `PATCH {{server}}/users/updateUserStatus/:userId/status`\n\n---\n\n### Purpose\nUse this request to toggle whether a user account is active. Typical use-cases:\n- Deactivate a user (block login/access)\n- Reactivate a user (restore access)\n\n---\n\n### Authentication\nThis endpoint is expected to require an access token.\n\nIn this workspace you have role tokens available as environment variables:\n- `{{adminToken}}`\n- `{{analystToken}}`\n- `{{viewerToken}}`\n\n**Recommended**: use an admin-level token (commonly required for user management).\n\nIf your collection/folder already applies auth, keep this request set to inherit it. Otherwise, add an `Authorization` header like:\n\n```http\nAuthorization: Bearer {{adminToken}}\n```\n\n---\n\n### Required variables / inputs\n#### Environment variables\n- `server` (required): Base URL for the API, e.g. `https://api.example.com`\n\n#### Path parameters\n- `userId` (required): The user identifier to update.\n\n**This request currently uses a hard-coded userId in the URL**:\n`69d14075d559f6ecec7406ac`\n\nYou may replace it with a variable (recommended) such as `{{recordId}}` if that represents the user id in your environment.\n\n#### Body (JSON)\nSend a JSON object:\n- `isActive` (boolean, required):\n  - `true` → activate user\n  - `false` → deactivate user\n\n---\n\n### Request example\n```http\nPATCH {{server}}/users/updateUserStatus/69d14075d559f6ecec7406ac/status\nAuthorization: Bearer {{adminToken}}\nContent-Type: application/json\n\n{\n  \"isActive\": false\n}\n```\n\n---\n\n### Response examples\n> Exact response shape depends on your backend implementation. Common patterns are shown below.\n\n#### 200 OK (updated)\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"userId\": \"69d14075d559f6ecec7406ac\",\n    \"isActive\": false\n  }\n}\n```\n\n#### 204 No Content\nSome implementations return no body on success.\n\n---\n\n### Common errors / troubleshooting\n- **400 Bad Request**\n  - Missing/invalid `isActive`\n  - Malformed JSON\n- **401 Unauthorized**\n  - Missing/expired token\n  - Token not included as `Authorization: Bearer <token>`\n- **403 Forbidden**\n  - Token present but lacks permission (e.g., using `viewerToken` for an admin action)\n- **404 Not Found**\n  - `userId` does not exist\n- **409 Conflict** (optional)\n  - Operation not allowed due to account state/business rules\n- **500 Internal Server Error**\n  - Unexpected server error; check server logs/correlation id if returned\n\n---\n\n### Notes\n- If the API enforces role-based access control, prefer `{{adminToken}}`.\n- Ensure `{{server}}` points to the correct environment (dev/stage/prod) before running."
+          },
+          "response": []
+        },
+        {
+          "name": "deleteUser",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OWQxM2Q2MzJlMmJjMjcwNGUwZmY3MzMiLCJpYXQiOjE3NzUzMjI0OTksImV4cCI6MTc3NTQwODg5OX0.az-yNTEU7grmKFqPRIosPeYijB52DF_4Y3jPHPHCMUk",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/users/deleteUser/69d14075d559f6ecec7406ac",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "users",
+                "deleteUser",
+                "69d14075d559f6ecec7406ac"
+              ]
+            },
+            "description": "## Purpose\nDeletes a user record by its **userId**.\n\n- **Method:** `DELETE`\n- **Endpoint:** `{{server}}/users/deleteUser/:userId`\n\nThis request is typically used by administrators to remove a user from the system.\n\n---\n\n## Authentication (Required)\nThis endpoint is expected to require an **admin-level Bearer token**.\n\nIn this workspace, the common pattern is:\n- Header: `Authorization: Bearer {{adminToken}}`\n\nNotes:\n- `{{adminToken}}` should be a valid admin JWT/access token.\n- If you send an analyst/viewer token (for example `{{analystToken}}` / `{{viewerToken}}`), the API may return **403 Forbidden** depending on server rules.\n\n---\n\n## Path variables\n| Variable | Required | Description | Example |\n|---|---:|---|---|\n| `userId` | Yes | The unique identifier of the user to delete. | `69d14075d559f6ecec7406ac` |\n\n**Current request URL:**\n```\n{{server}}/users/deleteUser/69d14075d559f6ecec7406ac\n```\n\n---\n\n## Query parameters\nNone.\n\n---\n\n## Request headers\nNot explicitly set on this request.\n\nTypical required header(s) for secured endpoints:\n- `Authorization: Bearer {{adminToken}}`\n\n(Do not add unless your collection/folder auth already injects it.)\n\n---\n\n## Request body\nNone. (DELETE request)\n\n---\n\n## Example request\n```http\nDELETE {{server}}/users/deleteUser/69d14075d559f6ecec7406ac\nAuthorization: Bearer {{adminToken}}\n```\n\n---\n\n## Example responses\n### 200 OK (deleted)\nCommon patterns include a confirmation message and/or the deleted user id.\n```json\n{\n  \"success\": true,\n  \"message\": \"User deleted successfully\",\n  \"userId\": \"69d14075d559f6ecec7406ac\"\n}\n```\n\n### 404 Not Found (unknown user)\n```json\n{\n  \"success\": false,\n  \"message\": \"User not found\"\n}\n```\n\n### 401 Unauthorized (missing/invalid token)\n```json\n{\n  \"success\": false,\n  \"message\": \"Unauthorized\"\n}\n```\n\n---\n\n## Status codes\n- **200 OK** — user deleted successfully.\n- **204 No Content** — user deleted successfully (no response body) *(some implementations)*.\n- **400 Bad Request** — invalid/malformed `userId`.\n- **401 Unauthorized** — missing/expired/invalid token.\n- **403 Forbidden** — authenticated but not allowed (non-admin role).\n- **404 Not Found** — user id does not exist.\n- **409 Conflict** — cannot delete due to constraints (e.g., referenced by other resources) *(if implemented)*.\n- **500 Internal Server Error** — unexpected server error.\n\n---\n\n## Variables used in this workspace\nThis request relies on Postman variables for portability across environments:\n\n- `{{server}}` *(used here)*: Base API URL, e.g. `https://api.yourdomain.com`.\n- `{{adminToken}}`: Admin Bearer token used for Authorization.\n- `{{analystToken}}`: Analyst role token (usually insufficient for admin-only deletion).\n- `{{viewerToken}}`: Viewer role token (usually insufficient for admin-only deletion).\n- `{{recordId}}`: Common id variable used in other requests; **not used** in this request as currently configured.\n\n---\n\n## Notes / troubleshooting\n- Ensure `{{server}}` includes the scheme (`http://` or `https://`).\n- If you receive **401**, refresh/regenerate `{{adminToken}}` and confirm the Authorization header is being applied (either at request level or inherited from folder/collection).\n- If you receive **404**, confirm the `userId` exists and is correct for the current environment/database.\n- Some APIs implement *soft delete*; verify whether deletion is permanent or reversible in your backend."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Record",
+      "item": [
+        {
+          "name": "createRecord",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"amount\": 10000,\r\n  \"type\": \"INCOME\",\r\n  \"category\": \"freelance\",\r\n  \"date\": \"2026-02-01T00:00:00.000Z\",\r\n  \"description\": \"Freelance project payment\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{server}}/record/createRecord",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "record",
+                "createRecord"
+              ]
+            },
+            "description": "## createRecord\n\nCreate a new financial record (income/expense) in Zorvyn.\n\n**Endpoint:** `POST {{server}}/record/createRecord`\n\n### Purpose\n\nUse this request to add a single record (for example: salary, rent, utilities, freelance income) to the system. The record is typically used later for reporting, balances, and filtering by type/category/date.\n\n---\n\n## Authentication\n\nThis endpoint is expected to be protected.\n\n- **Type:** Bearer token (JWT or similar)\n    \n- **How to provide:** `Authorization: Bearer`\n    \n- **Suggested token variables (from environment** **`Zorvyn`****):**\n    - `{{adminToken}}` (recommended for create operations)\n        \n    - `{{analystToken}}` (may be allowed depending on API role rules)\n        \n    - `{{viewerToken}}` (typically **not** allowed for create)\n        \n\n**Example header**\n\n``` http\nAuthorization: Bearer {{adminToken}}\n\n ```\n\n---\n\n## Headers\n\nRequired:\n\n- `Content-Type: application/json`\n    \n- `Authorization: Bearer`\n    \n\nOptional (if your API supports it):\n\n- `Accept: application/json`\n    \n\n---\n\n## Request Body (JSON)\n\nSend a JSON object describing the record.\n\n### Schema\n\n``` json\n{\n  \"amount\": 0,\n  \"type\": \"INCOME\",\n  \"category\": \"string\",\n  \"date\": \"ISO-8601 datetime string\",\n  \"description\": \"string\"\n}\n\n ```\n\n### Field details\n\n- `amount` _(number | integer, required)_: Positive number representing the value of the record.\n    \n- `type` _(string, required)_: Record type.\n    - Allowed values (observed): `INCOME`, `EXPENSE`\n        \n- `category` _(string, required)_: Category label for grouping (e.g., `salary`, `rent`, `utilities`, `freelance`).\n    \n- `date` _(string, required)_: ISO-8601 timestamp (e.g., `2026-02-01T00:00:00.000Z`).\n    \n- `description` _(string, optional)_: Free-text note.\n    \n\n### Example request body (as configured in this request)\n\n``` json\n{\n  \"amount\": 10000,\n  \"type\": \"INCOME\",\n  \"category\": \"freelance\",\n  \"date\": \"2026-02-01T00:00:00.000Z\",\n  \"description\": \"Freelance project payment\"\n}\n\n ```\n\n---\n\n## Example request\n\n``` http\nPOST {{server}}/record/createRecord\nContent-Type: application/json\nAuthorization: Bearer {{adminToken}}\n{\n  \"amount\": 10000,\n  \"type\": \"INCOME\",\n  \"category\": \"freelance\",\n  \"date\": \"2026-02-01T00:00:00.000Z\",\n  \"description\": \"Freelance project payment\"\n}\n\n ```\n\n---\n\n## Example success response\n\n> Exact response shape depends on your backend implementation. \n  \n\nCommon patterns:\n\n### 201 Created\n\n``` json\n{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"<recordId>\",\n    \"amount\": 10000,\n    \"type\": \"INCOME\",\n    \"category\": \"freelance\",\n    \"date\": \"2026-02-01T00:00:00.000Z\",\n    \"description\": \"Freelance project payment\",\n    \"createdAt\": \"2026-02-01T12:34:56.789Z\"\n  }\n}\n\n ```\n\nIf your API returns the created ID, you can store it into `{{recordId}}` for follow-up requests.\n\n---\n\n## Common error responses\n\n- **400 Bad Request**\n    - Missing required fields (`amount`, `type`, `category`, `date`)\n        \n    - Invalid enum for `type`\n        \n    - Invalid date format (not ISO-8601)\n        \n    - Amount is not a number / negative when not allowed\n        \n- **401 Unauthorized**\n    - Missing/invalid `Authorization` token\n        \n- **403 Forbidden**\n    - Token is valid but role does not have permission (e.g., viewer attempting create)\n        \n- **409 Conflict**\n    - Duplicate/overlapping record if your API enforces uniqueness (implementation-specific)\n        \n- **415 Unsupported Media Type**\n    - Missing/incorrect `Content-Type: application/json`\n        \n- **500 Internal Server Error**\n    - Unexpected server-side failure\n        \n\n---\n\n## Notes\n\n- This request currently has no headers configured in Postman; ensure you add `Content-Type` and `Authorization` as needed before sending.\n    \n- Base URL is taken from `{{server}}` in the active environment (`Zorvyn`)."
+          },
+          "response": []
+        },
+        {
+          "name": "getAllRecords",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{analystToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/record/getAllRecords",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "record",
+                "getAllRecords"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "EXPENSE",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "salary",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-31T00:00:00.000Z",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "amount",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "salary",
+                  "type": "text",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "## Purpose\n\nFetch a list of financial records (income/expense) for the authenticated user. Supports optional pagination, filtering, searching, and sorting.\n\n**Endpoint**: `GET {{server}}/record/getAllRecords`\n\n---\n\n## Authentication\n\nThis endpoint requires a Bearer token.\n\nUse one of the tokens from the active environment **Zorvyn**:\n\n- `{{adminToken}}`\n    \n- `{{analystToken}}`\n    \n- `{{viewerToken}}`\n    \n\n**Auth header**:\n\n``` http\nAuthorization: Bearer <token>\n\n ```\n\n---\n\n## Required headers\n\n- `Authorization: Bearer` (required)\n    \n- `Content-Type` is not required for `GET` requests (no request body).\n    \n\n---\n\n## Query parameters (all optional)\n\nAll query params are optional and can be enabled as needed.\n\n- `page` (number, default: `1`): Page number.\n    \n- `limit` (number, default: `10`): Items per page.\n    \n- `type` (string): Filter by record type.\n    \n    - Example values: `EXPENSE`, `INCOME`\n        \n- `category` (string): Filter by category (e.g., `salary`, `rent`, `food`, `utilities`).\n    \n- `from` (ISO-8601 datetime): Start date/time (inclusive), e.g. `2026-01-01T00:00:00.000Z`.\n    \n- `to` (ISO-8601 datetime): End date/time (inclusive), e.g. `2026-01-31T00:00:00.000Z`.\n    \n- `sortBy` (string): Field to sort by (example: `amount`).\n    \n- `sortOrder` (string): `asc` or `desc`.\n    \n- `search` (string): Free-text search term (example: `salary`).\n    \n\n---\n\n## Example request\n\n``` bash\ncurl --request GET \"{{server}}/record/getAllRecords?page=1&limit=10&type=EXPENSE&sortBy=amount&sortOrder=desc\" \\\n  --header \"Authorization: Bearer {{analystToken}}\"\n\n ```\n\n---\n\n## Example success response (200)\n\n``` json\n{\n  \"statusCode\": 200,\n  \"data\": [\n    {\n      \"_id\": \"69d22bb8fdd62b0448251a76\",\n      \"amount\": 5000,\n      \"type\": \"EXPENSE\",\n      \"category\": \"utilities\",\n      \"date\": \"2026-02-05T00:00:00.000Z\",\n      \"description\": \"Electricity bill\",\n      \"createdBy\": {\n        \"_id\": \"69d2280e594a36d14124d83f\",\n        \"name\": \"rahul\",\n        \"email\": \"rahul@test.com\"\n      },\n      \"isDeleted\": false,\n      \"createdAt\": \"2026-04-05T09:30:32.720Z\",\n      \"updatedAt\": \"2026-04-05T09:30:32.720Z\"\n    }\n  ],\n  \"message\": \"Records fetched successfully\",\n  \"success\": true,\n  \"meta\": {\n    \"total\": 5,\n    \"page\": 1,\n    \"limit\": 10,\n    \"pages\": 1,\n    \"filters\": {\n      \"type\": null,\n      \"category\": null,\n      \"from\": null,\n      \"to\": null,\n      \"search\": null\n    }\n  }\n}\n\n ```\n\n---\n\n## Error cases\n\nCommon error responses you may see:\n\n- **401 Unauthorized**: Missing/invalid/expired Bearer token.\n    \n- **403 Forbidden**: Authenticated, but role does not have permission.\n    \n- **400 Bad Request**: Invalid query parameter values (e.g., non-numeric `page/limit`, invalid date format).\n    \n- **400 Bad Request**: from date is after to date\n    \n- **400 Bad Request:** Invalid type value - must be INCOME or EXPENSE.\n    \n- **400 Bad Request:** Invalid category value - must be one of the predefined categories (salary, rent, food, etc).\n    \n- **400 Bad Request:** limit exceeds maximum allowed value of 100.\n    \n- **500 Internal Server Error**: Unexpected server-side error.\n    \n\n---\n\n## Using environment variables (Zorvyn)\n\nThis request is already set up to use variables from the active environment **Zorvyn**:\n\n- `{{server}}` — Base URL of the API (used in the request URL).\n    \n- `{{adminToken}}`, `{{analystToken}}`, `{{viewerToken}}` — Use one in the `Authorization` header.\n    \n- `{{recordId}}` — Not used by this specific endpoint, but available for other record endpoints (e.g., get/update/delete by id).\n    \n\nTo switch roles, keep the request the same and only change the token used in the `Authorization` header."
+          },
+          "response": []
+        },
+        {
+          "name": "getRecordById",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/record/{{recordId}}/getRecordById",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "record",
+                "{{recordId}}",
+                "getRecordById"
+              ]
+            },
+            "description": "## Purpose\nFetch a single record by its ID.\n\n## Authorization\nThis endpoint requires a Bearer token.\n\n- Header: `Authorization: Bearer <token>`\n- Recommended variables:\n  - `{{adminToken}}` / `{{analystToken}}` / `{{viewerToken}}` (choose one based on the role you want to test)\n\n## Endpoint\n`GET {{server}}/record/{{recordId}}/getRecordById`\n\n### Path parameters\n- `recordId` *(string)* — The unique ID of the record to fetch. Typically set via `{{recordId}}`.\n\n### Query parameters\nNone.\n\n## Example request\n```http\nGET {{server}}/record/{{recordId}}/getRecordById\nAuthorization: Bearer {{adminToken}}\n```\n\n## Response\n### Success (200)\nReturns the record.\n\nCommon fields you can expect in a record response (exact shape depends on the API implementation):\n- `id` / `_id` — Record identifier\n- `createdAt` — Creation timestamp\n- `updatedAt` — Last update timestamp\n- `...` — Additional record-specific fields\n\n## Error codes\n- **400 Bad Request** — Missing/invalid `recordId`\n- **401 Unauthorized** — Missing/invalid/expired token\n- **403 Forbidden** — Token is valid but doesn’t have permission to read this record\n- **404 Not Found** — No record exists for the provided `recordId`\n- **500 Internal Server Error** — Unexpected server error\n"
+          },
+          "response": []
+        },
+        {
+          "name": "updateRecord",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"amount\": 15000,\r\n    \"description\": \"Freelance project payment bonus\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{server}}/record/{{recordId}}/updateRecord",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "record",
+                "{{recordId}}",
+                "updateRecord"
+              ]
+            },
+            "description": "## updateRecord\n\nUpdate fields on an existing record by ID.\n\n**Method:** `PATCH`  \n**URL:** `{{server}}/record/{{recordId}}/updateRecord`\n\n### Purpose\n\nUse this endpoint to partially update an existing record (for example, adjusting the `amount` or changing the `description`). Only the fields you include in the request body are updated.\n\n### Authentication (required)\n\nSend a Bearer token with sufficient privileges (typically an admin token).\n\n**Header**\n\n``` bash\nAuthorization: Bearer {{adminToken}}\n\n ```\n\n> If your collection/folder already applies auth at a higher level, this request may inherit it. The value above shows the expected token format. \n  \n\n### Path parameters\n\n| Parameter | Required | Description |\n| --- | --- | --- |\n| `recordId` | Yes | The unique identifier of the record to update. Uses `{{recordId}}`. |\n\n### Query parameters\n\nNone.\n\n### Request body\n\n**Content-Type:** `application/json`\n\nProvide one or more updatable fields.\n\n| Field | Type | Required | Notes |\n| --- | --- | --- | --- |\n| `amount` | number | No | Updated amount value. |\n| `description` | string | No | Updated human-readable description. |\n\n#### Example request\n\n``` bash\nPATCH {{server}}/record/{{recordId}}/updateRecord\nAuthorization: Bearer {{adminToken}}\nContent-Type: application/json\n{\n  \"amount\": 15000,\n  \"description\": \"Freelance project payment bonus\"\n}\n\n ```\n\n### Example success response\n\n(Exact shape may vary by implementation.)\n\n``` bash\n200 OK\nContent-Type: application/json\n{\n  \"id\": \"{{recordId}}\",\n  \"amount\": 15000,\n  \"description\": \"Freelance project payment bonus\",\n  \"updatedAt\": \"2026-04-05T12:34:56.000Z\"\n}\n\n ```\n\n### Common errors\n\n| Status | When it happens | Typical causes |\n| --- | --- | --- |\n| `400 Bad Request` | Payload is invalid | Wrong data types, missing/invalid fields, malformed JSON. |\n| `401 Unauthorized` | Missing/invalid token | No `Authorization` header, expired token, wrong token format. |\n| `403 Forbidden` | Token lacks permission | Using `{{viewerToken}}`/`{{analystToken}}` when admin privileges are required. |\n| `404 Not Found` | Record doesn’t exist | `{{recordId}}` not found or not accessible to the caller. |\n| `409 Conflict` | Update cannot be applied | Record state prevents update (if applicable). |\n| `500 Internal Server Error` | Unexpected server failure | Service error; retry and check logs if available. |\n\n### Notes\n\n- This is a **partial update** endpoint (PATCH): omit fields you don’t want to change.\n    \n- Ensure `{{server}}` points to the correct base URL in the active environment (**Zorvyn**)."
+          },
+          "response": []
+        },
+        {
+          "name": "deleteRecord",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/record/{{recordId}}/deleteRecord",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "record",
+                "{{recordId}}",
+                "deleteRecord"
+              ]
+            },
+            "description": "Deletes a single record by ID.\n\n**Method & URL**\n- `DELETE {{server}}/record/{{recordId}}/deleteRecord`\n\n**Auth**\n- This endpoint is typically protected. Send a valid admin access token.\n- Expected header pattern (if your API uses Bearer tokens):\n  - `Authorization: Bearer {{adminToken}}`\n\n**Path variables**\n- `recordId` (required) — the unique identifier of the record to delete.\n  - In Postman, this request uses `{{recordId}}` from the active environment.\n\n**Request body / query params**\n- No body.\n- No query parameters.\n\n**Required environment variables**\n- `server` — base URL of the API (e.g., `http://localhost:3000` or `https://api.example.com`).\n- `recordId` — ID of the record to delete.\n- `adminToken` — admin token used for authorization.\n\n**Expected responses** *(implementation-dependent)*\n- `200 OK` or `204 No Content` — record deleted successfully.\n- `400 Bad Request` — invalid `recordId` format.\n- `401 Unauthorized` / `403 Forbidden` — missing/invalid token or insufficient permissions.\n- `404 Not Found` — record does not exist.\n- `500 Internal Server Error` — unexpected server error.\n\n**Notes**\n- This operation is destructive. Use with caution, especially in production.\n- If your API returns a body on success, it may include the deleted record or a confirmation message."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "summary",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/dashboard/summary",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "dashboard",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-31T00:00:00.000Z",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Fetch an aggregated dashboard summary (income/expense totals and derived metrics) for the authenticated user.\n\n**Request**\n- **Method:** `GET`\n- **URL:** `{{server}}/dashboard/summary`\n\n**Authentication / Roles**\n- Send a Bearer token in the `Authorization` header: `Bearer <token>`.\n- Use one of the environment tokens as applicable:\n  - `{{adminToken}}`\n  - `{{analystToken}}`\n  - `{{viewerToken}}`\n- The open tab indicates `adminToken` is currently used; confirm which roles are permitted by the API (commonly admin/analyst/viewer can read summaries).\n\n**Required environment variables**\n- `server` — Base URL of the API (e.g. `http://localhost:3000` or `https://api.example.com`).\n\n**Query parameters (optional)**\nUse these to filter the date/time range for the summary.\n- `from` (ISO 8601 datetime) — start of range (inclusive)\n  - Example: `2026-01-01T00:00:00.000Z`\n- `to` (ISO 8601 datetime) — end of range (inclusive)\n  - Example: `2026-01-31T00:00:00.000Z`\n\nIf omitted, the API typically returns a default range (e.g., current month). If only one of `from`/`to` is provided, behavior is API-defined.\n\n**Request body**\n- None.\n\n**Successful response (200)**\nReturns a standard envelope with aggregated metrics:\n```json\n{\n  \"statusCode\": 200,\n  \"data\": {\n    \"income\": {\n      \"total\": 50000,\n      \"count\": 1,\n      \"average\": 50000,\n      \"highest\": 50000,\n      \"lowest\": 50000\n    },\n    \"expense\": {\n      \"total\": 17000,\n      \"count\": 2,\n      \"average\": 8500,\n      \"highest\": 15000,\n      \"lowest\": 2000\n    },\n    \"netBalance\": 33000,\n    \"savingsRate\": 66\n  },\n  \"message\": \"Summary fetched successfully\",\n  \"success\": true,\n  \"meta\": {}\n}\n```\n\n**Notes**\n- `savingsRate` is expected to be derived from income vs. expense; units/rounding depend on the API.\n- Common error cases include `401 Unauthorized` (missing/invalid token) and `403 Forbidden` (role not permitted)."
+          },
+          "response": []
+        },
+        {
+          "name": "category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/dashboard/categories",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "dashboard",
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "EXPENSE",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "## Purpose\nRetrieve the list of categories available in the dashboard.\n\nThis endpoint is typically used to populate category pickers/filters in the UI and to drive reporting/analytics based on category.\n\n---\n## Endpoint\n`GET {{server}}/dashboard/categories`\n\n**Base URL variable:** `{{server}}` (from the active environment **Zorvyn**)\n\n---\n## Authentication\nThis request is expected to be authenticated.\n\n- The request currently **uses the environment variable** `{{adminToken}}` (seen in the request’s used variables).\n- Send the token as a Bearer token in the `Authorization` header.\n\nExample header:\n```http\nAuthorization: Bearer {{adminToken}}\n```\n\nIf your API supports role-based access, swap the token variable as needed (e.g., `{{analystToken}}`, `{{viewerToken}}`).\n\n---\n## Query Parameters\n| Name | Type | Required | Description | Example |\n|------|------|----------|-------------|---------|\n| `type` | string | No | Filters categories by type. The request includes this parameter but it is currently **disabled** in Params. Enable it to apply the filter. | `EXPENSE` |\n\nNotes:\n- When enabled, the configured value is `EXPENSE`.\n\n---\n## Request Body\nNone.\n\n---\n## Response Expectations\n### Success (200 OK)\nReturns a JSON payload containing categories.\n\nSince there are currently **no saved Examples** on this request, below is a representative sample shape you can expect (field names may vary by implementation):\n```json\n{\n  \"data\": [\n    {\n      \"id\": \"cat_123\",\n      \"name\": \"Food\",\n      \"type\": \"EXPENSE\"\n    },\n    {\n      \"id\": \"cat_124\",\n      \"name\": \"Transport\",\n      \"type\": \"EXPENSE\"\n    }\n  ]\n}\n```\n\nCommon expectations:\n- Response content type: `application/json`\n- `data` is typically an array of category objects.\n\n---\n## Error Codes\nTypical error responses for this endpoint include:\n\n- **400 Bad Request** — Invalid query parameter (e.g., unsupported `type`).\n- **401 Unauthorized** — Missing/invalid access token.\n- **403 Forbidden** — Authenticated but not allowed for this resource (insufficient role/permissions).\n- **404 Not Found** — Route not found (incorrect base URL or path).\n- **500 Internal Server Error** — Unexpected server error.\n\n---\n## Related Postman Setup Notes\n- Environment variables available in this workspace include: `server`, `adminToken`, `analystToken`, `viewerToken`.\n- To apply filtering, open Params and enable the `type` query parameter."
+          },
+          "response": []
+        },
+        {
+          "name": "trends",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/dashboard/trends",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "dashboard",
+                "trends"
+              ],
+              "query": [
+                {
+                  "key": "groupBy",
+                  "value": "week",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "### GET `{{server}}/dashboard/trends`\n\nReturns trend data for the dashboard (time-series style aggregates) so the UI can render charts/insights over time.\n\n---\n\n#### Authentication\nThis endpoint requires an access token.\n\n- **Auth type:** Bearer token\n- **Header:** `Authorization: Bearer <token>`\n- **Where to get token in Postman:** use one of the environment variables (e.g., `{{adminToken}}`) depending on the role you want to test.\n\n---\n\n#### Query parameters\n| Param | Type | Required | Allowed / Example | Notes |\n|------|------|----------|-------------------|------|\n| `groupBy` | string | Optional | `week` | Controls the aggregation period for trends. If omitted, the server default is used. |\n\n---\n\n#### Example request\n```http\nGET {{server}}/dashboard/trends?groupBy=week\nAuthorization: Bearer {{adminToken}}\n```\n\n---\n\n#### Example response\n> Shape may vary by backend version, but is typically a time-series list grouped by the requested period.\n\n```json\n{\n  \"groupBy\": \"week\",\n  \"data\": [\n    {\n      \"period\": \"2026-W12\",\n      \"value\": 42\n    },\n    {\n      \"period\": \"2026-W13\",\n      \"value\": 55\n    }\n  ]\n}\n```\n\n---\n\n#### Common errors\n- **400 Bad Request** — invalid `groupBy` value.\n- **401 Unauthorized** — missing/invalid/expired token (check `Authorization` header and the selected environment token variable).\n- **403 Forbidden** — token is valid, but the role does not have permission to view dashboard trends.\n- **500 Internal Server Error** — unexpected server error.\n"
+          },
+          "response": []
+        },
+        {
+          "name": "recent",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{server}}/dashboard/recent",
+              "host": [
+                "{{server}}"
+              ],
+              "path": [
+                "dashboard",
+                "recent"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "## Purpose\nRetrieves the list of most recent dashboard items for the current authenticated user.\n\n**Method:** `GET`  \n**URL:** `{{server}}/dashboard/recent`\n\n---\n## Authentication\nThis request is designed to be sent to the `{{server}}` base URL and uses an access token stored in the environment.\n\n- **Required token variable:** `{{adminToken}}`\n- **How to send it:** Add an `Authorization` header (typically `Bearer <token>`) when calling this endpoint.\n\n> Note: No headers are currently defined at the request level, so authentication is expected to be applied via a parent collection/folder header, a shared auth configuration, or added manually at send time.\n\n---\n## Path parameters\nNone.\n\n---\n## Query parameters\n- `limit` *(optional)*: Maximum number of recent items to return.\n  - Present in this request but currently **disabled**.\n  - Example: `?limit=5`\n\n---\n## Request body\nNone (GET request).\n\n---\n## Example\n### Request\n```http\nGET {{server}}/dashboard/recent\nAuthorization: Bearer {{adminToken}}\n```\n\n### Response\nNo saved examples are attached to this request in the collection, so the exact response payload shape/status codes are not documented here.\n\n---\n## Common errors\nNo saved examples/responses were found for this request, so common error codes cannot be inferred. Typical errors for authenticated endpoints may include:\n- `401 Unauthorized` (missing/invalid token)\n- `403 Forbidden` (insufficient permissions)\n- `5xx` (server errors)\n"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
