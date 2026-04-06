@@ -1,20 +1,19 @@
 # Zorvyn - Finance Backend API
 
-A production-grade financial record management backend built with Express.js, MongoDB, and modern security practices. Zorvyn provides a robust, scalable API for managing financial records with role-based access control (RBAC) and comprehensive audit trails.
+A financial record management backend built with Express.js, MongoDB, and modern security practices. Zorvyn provides a robust, scalable API for managing financial records with role-based access control (RBAC) and comprehensive audit trails.
 
 ## Table of Contents
 
 - [Project Overview](#project-overview)
-- [Architecture & Design Decisions](#architecture--design-decisions)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Core Features](#core-features)
-- [Installation & Setup](#installation--setup)
-- [API Documentation](#api-documentation)
 - [Authentication & Authorization](#authentication--authorization)
+- [API Documentation](#api-documentation)
 - [Database Design](#database-design)
+- [Architecture & Design Decisions](#architecture--design-decisions)
+- [Installation & Setup](#installation--setup)
 - [Error Handling](#error-handling)
-- [Development](#development)
 
 ---
 
@@ -26,259 +25,32 @@ Zorvyn is a backend API service designed to manage personal and organizational f
 
 ---
 
-## Architecture & Design Decisions
-
-### 1. **MVC Architecture with Service Layer**
-
-The application follows the **Model-View-Controller** pattern enhanced with a **service layer** for business logic separation:
-
-```
-Routes → Controllers → Services → Models → Database
-         ↓
-      Middlewares (Auth, Validation, Error Handling)
-```
-
-**Rationale**:
-
-- **Separation of Concerns**: Each layer has a specific responsibility
-- **Testability**: Services can be tested independently without HTTP layer
-- **Reusability**: Services can be called from multiple controllers or scheduled jobs
-- **Maintainability**: Changes to business logic don't affect route definitions
-
-### 2. **JWT-Based Authentication with Dual Tokens**
-
-Implemented **JWT (JSON Web Tokens)** with access and refresh token pattern:
-
-```javascript
-// Access Token: Short-lived token (typically 15min - 1hour)
-// Refresh Token: Long-lived token stored in database (sent via secure cookies or localStorage)
-```
-
-**Rationale**:
-
-- **Stateless**: No session storage required; scales horizontally
-- **Security**: Short-lived access tokens minimize exposure window
-- **Flexibility**: Refresh tokens allow token rotation without re-authentication
-- **Standard**: JWT is widely adopted and language/framework agnostic
-
-### 3. **Role-Based Access Control (RBAC)**
-
-Three-tier permission system with granular control:
-
-```javascript
-ROLES:
-  ├── VIEWER: Read-only access to dashboard
-  ├── ANALYST: Records read access + dashboard
-  └── ADMIN: Full CRUD + user management
-```
-
-**Rationale**:
-
-- **Security**: Implements principle of least privilege
-- **Flexibility**: Easy to extend with new permissions
-- **Centralized**: `config/rbac.js` is single source of truth for permissions
-- **Scalability**: Permission checks are stateless and can be cached
-
-### 4. **Zod for Schema Validation**
-
-All inputs validated using **Zod** schemas before reaching business logic:
-
-```javascript
-// Validation Layers:
-// 1. Route-level: validate(schema) middleware
-// 2. Service-level: Additional business rule validation
-// 3. Database-level: Mongoose schema constraints
-```
-
-**Rationale**:
-
-- **Type Safety**: Compile-time and runtime schema validation
-- **Performance**: Fail fast before expensive operations
-- **Consistency**: Single schema definition for docs, validation, and types
-- **Error Clarity**: Detailed field-level error messages
-
-### 5. **Soft Delete Pattern**
-
-Records are never truly deleted; marker field `isDeleted` is used:
-
-```javascript
-// Database query automatically excludes soft-deleted records:
-userSchema.pre(/^find/, function () {
-  this.where({ isDeleted: false });
-});
-```
-
-**Rationale**:
-
-- **Audit Trail**: Maintains historical data for compliance/investigation
-- **Data Recovery**: Accidental deletions can be restored
-- **Referential Integrity**: Foreign keys remain valid
-- **Compliance**: Meets financial audit requirements
-
-### 6. **Centralized Error Handling**
-
-All errors flow through custom `ApiError` class and global error handler middleware:
-
-```javascript
-// Custom ApiError with standard structure:
-throw new ApiError(statusCode, message, errors, stack);
-
-// Global handler ensures:
-// ✓ Consistent error response format
-// ✓ No stack traces leaked in production
-// ✓ Proper HTTP status codes
-// ✓ Operational vs programming errors are distinguished
-```
-
-**Rationale**:
-
-- **Consistency**: Clients always receive predictable error format
-- **Security**: Prevents information leakage via error messages
-- **Debugging**: Stack traces available under controlled conditions
-- **Metrics**: Centralized location to log/monitor errors
-
-### 7. **Async Error Handling with Wrapper**
-
-All route handlers wrapped with `asyncHandler`:
-
-```javascript
-// Without wrapper: try-catch needed in every route
-// With wrapper: Automatic catch and forward to error handler
-const route = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
-  // Error automatically caught and passed to next(error)
-});
-```
-
-**Rationale**:
-
-- **DRY Principle**: Eliminates repetitive try-catch blocks
-- **Consistency**: All async errors handled uniformly
-- **Readability**: Route logic clear without error handling noise
-
-### 8. **Standardized API Response Format**
-
-All successful responses follow consistent structure:
-
-```javascript
-{
-  statusCode: 200,
-  data: { /* actual data */ },
-  message: "Operation successful",
-  success: true,
-  meta: { /* pagination, counts, etc */ }
-}
-```
-
-**Rationale**:
-
-- **Client Predictability**: Frontend knows exact response structure
-- **Extensibility**: Meta field allows pagination, counts, timestamps
-- **API Evolution**: Can add fields without breaking clients
-- **Consistency**: Matches error response structure
-
-### 9. **Database Connection Pool Management**
-
-MongoDB connection configured with optimal settings:
-
-```javascript
-// Pool Config:
-maxPoolSize: 10,           // Max connections
-serverSelectionTimeoutMS: 5000,  // Fail fast
-socketTimeoutMS: 45000,          // Long operations
-```
-
-**Rationale**:
-
-- **Performance**: Connection pooling reduces latency
-- **Reliability**: Timeouts prevent hanging connections
-- **Scalability**: Handles concurrent requests efficiently
-- **Monitoring**: Connection events logged for diagnostics
-
-### 10. **Strategic Database Indexing**
-
-Indexes created for common query patterns:
-
-```javascript
-// Single-field indexes:
-email: { index: true }  // User lookups
-role: { index: true }   // Role-based queries
-
-// Compound indexes:
-{ date: -1, type: 1 }   // Date range + type queries
-{ category: 1, type: 1 } // Category + type queries
-```
-
-**Rationale**:
-
-- **Query Performance**: Orders of magnitude faster for large datasets
-- **Targeted**: Only indexes on frequently queried fields
-- **Sort Optimization**: Supports both filter and sort in same query
-- **Trade-off**: Slightly slower writes, much faster reads (acceptable for finance queries)
-
-### 11. **Graceful Shutdown Handling**
-
-Server properly closes connections on termination signals:
-
-```javascript
-process.on("SIGINT", async () => {
-  await server.close(); // Stop accepting new requests
-  await mongoose.connection.close(); // Flush pending operations
-  process.exit(0);
-});
-```
-
-**Rationale**:
-
-- **Data Integrity**: Pending operations complete before shutdown
-- **Clean Deployment**: No requests lost during updates
-- **Resource Cleanup**: Connections properly closed
-- **Production Ready**: Compatible with container orchestration signals
-
-### 12. **Environment Configuration with Validation**
-
-Zod schema validates all env variables at startup:
-
-```javascript
-// Fails immediately if missing/invalid vars
-const env = envSchema.parse(process.env);
-```
-
-**Rationale**:
-
-- **Early Detection**: Configuration errors caught before first request
-- **Type Safety**: Environment values properly typed
-- **Documentation**: Schema serves as env var specification
-- **Security**: Validation prevents injection attacks
-
----
-
 ## Tech Stack
-
-| Layer          | Technology     | Version | Purpose                         |
-| -------------- | -------------- | ------- | ------------------------------- |
-| **Runtime**    | Node.js        | -       | JavaScript runtime              |
-| **Framework**  | Express.js     | ^5.2.1  | HTTP server & routing           |
-| **Database**   | MongoDB        | -       | NoSQL data storage              |
-| **ODM**        | Mongoose       | ^9.3.3  | MongoDB object model            |
-| **Auth**       | JSON Web Token | ^9.0.3  | Token-based authentication      |
-| **Password**   | bcryptjs       | ^3.0.3  | Password hashing & verification |
-| **Validation** | Zod            | ^4.3.6  | Schema validation               |
-| **Security**   | Helmet         | ^8.1.0  | HTTP headers hardening          |
-| **CORS**       | cors           | ^2.8.6  | Cross-origin requests           |
-| **API Docs**   | Swagger UI     | ^5.0.1  | API documentation               |
-| **Env**        | dotenv         | ^17.3.1 | Environment config              |
-| **Dev**        | Nodemon        | ^3.1.14 | Development auto-reload         |
-
-**Design Rationale**:
-
-- **Express.js**: Minimal footprint, large ecosystem, perfect for business logic layer
-- **MongoDB**: Flexible schema for financial categories, horizontal scalability
-- **Mongoose**: Schema validation, relationships, lifecycle hooks
-- **JWT**: Stateless, scalable authentication without session store
-- **Zod**: TypeScript-first but works great in pure JS projects, exceptional error messages
-- **Helmet**: Automatically sets security-related HTTP headers
-
+    
+    | Layer          | Technology     | Version | Purpose                         |
+    | -------------- | -------------- | ------- | ------------------------------- |
+    | **Runtime**    | Node.js        | -       | JavaScript runtime              |
+    | **Framework**  | Express.js     | ^5.2.1  | HTTP server & routing           |
+    | **Database**   | MongoDB        | -       | NoSQL data storage              |
+    | **ODM**        | Mongoose       | ^9.3.3  | MongoDB object model            |
+    | **Auth**       | JSON Web Token | ^9.0.3  | Token-based authentication      |
+    | **Password**   | bcryptjs       | ^3.0.3  | Password hashing & verification |
+    | **Validation** | Zod            | ^4.3.6  | Schema validation               |
+    | **Security**   | Helmet         | ^8.1.0  | HTTP headers hardening          |
+    | **CORS**       | cors           | ^2.8.6  | Cross-origin requests           |
+    | **API Docs**   | Swagger UI     | ^5.0.1  | API documentation               |
+    | **Env**        | dotenv         | ^17.3.1 | Environment config              |
+    | **Dev**        | Nodemon        | ^3.1.14 | Development auto-reload         |
+    
+    **Design Rationale**:
+    
+    - **Express.js**: Minimal footprint, large ecosystem, perfect for business logic layer
+    - **MongoDB**: Flexible schema for financial categories, horizontal scalability
+    - **Mongoose**: Schema validation, relationships, lifecycle hooks
+    - **JWT**: Stateless, scalable authentication without session store
+    - **Zod**: TypeScript-first but works great in pure JS projects, exceptional error messages
+    - **Helmet**: Automatically sets security-related HTTP headers
+    
 ---
 
 ## Project Structure
@@ -334,13 +106,6 @@ zorvyn/
 ├── .env.example
 └── README.md
 ```
-
-**Design Philosophy**:
-
-- **Vertical Slicing**: Each feature (auth, records, etc.) has its own vertical stack
-- **Single Responsibility**: Each file has one clear purpose
-- **Co-location**: Related files (schema, controller, service) are easy to find
-- **Scalability**: New features can be added by creating new vertical slices
 
 ---
 
@@ -398,73 +163,62 @@ zorvyn/
 
 ---
 
-## Installation & Setup
+## Authentication & Authorization
 
-### Prerequisites
+### JWT Flow
 
-- Node.js 16+
-- MongoDB 6.0+ (local or cloud)
-- npm or yarn
-
-### 1. Clone Repository
-
-```bash
-git clone https://github.com/iamsurajthakur/Zorvyn.git
-cd Zorvyn
+```
+1. User Login
+   ↓
+2. Server generates Access Token (15-60 min) + Refresh Token (7-30 days)
+   ↓
+3. Client stores tokens
+   ↓
+4. Client sends Access Token in every request: Authorization: Bearer <token>
+   ↓
+5. Server verifies token via authenticate middleware
+   ↓
+6. If expired, client uses Refresh Token to get new Access Token
 ```
 
-### 2. Install Dependencies
+### Middleware Chain
 
-```bash
-npm install
+Every protected route follows this middleware chain:
+
+```javascript
+// 1. JSON body parser
+app.use(express.json())
+
+// 2. Authentication middleware (verifies JWT)
+router.post('/route', authenticate, ...)
+
+// 3. Authorization middleware (checks permissions)
+router.post('/route', authorize('record:create'), ...)
+
+// 4. Validation middleware (validates request schema)
+router.post('/route', validate(recordCreateSchema), ...)
+
+// 5. Route handler
+async (req, res) => { /* handler */ }
+
+// 6. Async error wrapper catches errors
+asyncHandler((req, res) => { /* ... */ })
+
+// 7. Error handler processes all errors
+app.use(globalErrorHandler)
 ```
 
-### 3. Environment Configuration
+### Permission Model
 
-```bash
-# Copy example to .env
-cp .env.example .env
+```javascript
+// RBAC Matrix ensures users can only access appropriate resources:
 
-# Edit .env with your configuration:
-NODE_ENV=development
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/zorvyn
-
-# JWT Secrets (generate random strings)
-ACCESS_TOKEN_SECRET=your-secret-key-here
-REFRESH_TOKEN_SECRET=your-refresh-secret-here
-
-# Optional
-LOG_LEVEL=debug
-CORS_ORIGIN=http://localhost:3000
+          | View Records | Create | Edit | Delete | View Dashboard | Manage Users |
+----------|--------------|--------|------|--------|----------------|--------------|
+VIEWER    |              |        |      |        | ✓              |              |
+ANALYST   | ✓            |        |      |        | ✓              |              |
+ADMIN     | ✓            | ✓      | ✓    | ✓      | ✓              | ✓            |
 ```
-
-### 4. Database Setup
-
-```bash
-# Seed initial data (users, records)
-npm run seed
-
-# Manual MongoDB setup (optional):
-# Connect to MongoDB CLI and create database:
-# use zorvyn
-```
-
-### 5. Start Server
-
-**Development** (with auto-reload):
-
-```bash
-npm run dev
-```
-
-**Production:**
-
-```bash
-npm start
-```
-
-Server runs on `http://localhost:5000` by default.
 
 ---
 
@@ -693,65 +447,6 @@ Authorization: Bearer <adminToken>
 
 ---
 
-## Authentication & Authorization
-
-### JWT Flow
-
-```
-1. User Login
-   ↓
-2. Server generates Access Token (15-60 min) + Refresh Token (7-30 days)
-   ↓
-3. Client stores tokens
-   ↓
-4. Client sends Access Token in every request: Authorization: Bearer <token>
-   ↓
-5. Server verifies token via authenticate middleware
-   ↓
-6. If expired, client uses Refresh Token to get new Access Token
-```
-
-### Middleware Chain
-
-Every protected route follows this middleware chain:
-
-```javascript
-// 1. JSON body parser
-app.use(express.json())
-
-// 2. Authentication middleware (verifies JWT)
-router.post('/route', authenticate, ...)
-
-// 3. Authorization middleware (checks permissions)
-router.post('/route', authorize('record:create'), ...)
-
-// 4. Validation middleware (validates request schema)
-router.post('/route', validate(recordCreateSchema), ...)
-
-// 5. Route handler
-async (req, res) => { /* handler */ }
-
-// 6. Async error wrapper catches errors
-asyncHandler((req, res) => { /* ... */ })
-
-// 7. Error handler processes all errors
-app.use(globalErrorHandler)
-```
-
-### Permission Model
-
-```javascript
-// RBAC Matrix ensures users can only access appropriate resources:
-
-          | View Records | Create | Edit | Delete | View Dashboard | Manage Users |
-----------|--------------|--------|------|--------|----------------|--------------|
-VIEWER    |              |        |      |        | ✓              |              |
-ANALYST   | ✓            |        |      |        | ✓              |              |
-ADMIN     | ✓            | ✓      | ✓    | ✓      | ✓              | ✓            |
-```
-
----
-
 ## Database Design
 
 ### User Schema
@@ -815,6 +510,310 @@ ADMIN     | ✓            | ✓      | ✓    | ✓      | ✓              | �
 
 ---
 
+## Architecture & Design Decisions
+
+### 1. **MVC Architecture with Service Layer**
+
+The application follows the **Model-View-Controller** pattern enhanced with a **service layer** for business logic separation:
+
+```
+Routes → Controllers → Services → Models → Database
+         ↓
+      Middlewares (Auth, Validation, Error Handling)
+```
+
+**Rationale**:
+
+- **Separation of Concerns**: Each layer has a specific responsibility
+- **Testability**: Services can be tested independently without HTTP layer
+- **Reusability**: Services can be called from multiple controllers or scheduled jobs
+- **Maintainability**: Changes to business logic don't affect route definitions
+
+### 2. **JWT-Based Authentication with Dual Tokens**
+
+Implemented **JWT (JSON Web Tokens)** with access and refresh token pattern:
+
+```javascript
+// Access Token: Short-lived token (typically 15min - 1hour)
+// Refresh Token: Long-lived token stored in database (sent via secure cookies or localStorage)
+```
+
+**Rationale**:
+
+- **Stateless**: No session storage required; scales horizontally
+- **Security**: Short-lived access tokens minimize exposure window
+- **Flexibility**: Refresh tokens allow token rotation without re-authentication
+
+### 3. **Role-Based Access Control (RBAC)**
+
+Three-tier permission system with granular control:
+
+```javascript
+ROLES:
+  ├── VIEWER: Read-only access to dashboard
+  ├── ANALYST: Records read access + dashboard
+  └── ADMIN: Full CRUD + user management
+```
+
+**Rationale**:
+
+- **Security**: Implements principle of least privilege
+- **Flexibility**: Easy to extend with new permissions
+- **Centralized**: `config/rbac.js` is single source of truth for permissions
+- **Scalability**: Permission checks are stateless and can be cached
+
+### 4. **Zod for Schema Validation**
+
+All inputs validated using **Zod** schemas before reaching business logic:
+
+```javascript
+// Validation Layers:
+// 1. Route-level: validate(schema) middleware
+// 2. Service-level: Additional business rule validation
+// 3. Database-level: Mongoose schema constraints
+```
+
+**Rationale**:
+
+- **Type Safety**: Compile-time and runtime schema validation
+- **Performance**: Fail fast before expensive operations
+- **Consistency**: Single schema definition for docs, validation, and types
+- **Error Clarity**: Detailed field-level error messages
+
+### 5. **Soft Delete Pattern**
+
+Records are never truly deleted; marker field `isDeleted` is used:
+
+```javascript
+// Database query automatically excludes soft-deleted records:
+userSchema.pre(/^find/, function () {
+  this.where({ isDeleted: false });
+});
+```
+
+**Rationale**:
+
+- **Audit Trail**: Maintains historical data for compliance/investigation
+- **Data Recovery**: Accidental deletions can be restored
+- **Referential Integrity**: Foreign keys remain valid
+- **Compliance**: Meets financial audit requirements
+
+### 6. **Centralized Error Handling**
+
+All errors flow through custom `ApiError` class and global error handler middleware:
+
+```javascript
+// Custom ApiError with standard structure:
+throw new ApiError(statusCode, message, errors, stack);
+
+// Global handler ensures:
+// ✓ Consistent error response format
+// ✓ No stack traces leaked in production
+// ✓ Proper HTTP status codes
+// ✓ Operational vs programming errors are distinguished
+```
+
+**Rationale**:
+
+- **Consistency**: Clients always receive predictable error format
+- **Security**: Prevents information leakage via error messages
+- **Debugging**: Stack traces available under controlled conditions
+- **Metrics**: Centralized location to log/monitor errors
+
+### 7. **Async Error Handling with Wrapper**
+
+All route handlers wrapped with `asyncHandler`:
+
+```javascript
+// Without wrapper: try-catch needed in every route
+// With wrapper: Automatic catch and forward to error handler
+const route = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  // Error automatically caught and passed to next(error)
+});
+```
+
+**Rationale**:
+
+- **DRY Principle**: Eliminates repetitive try-catch blocks
+- **Consistency**: All async errors handled uniformly
+- **Readability**: Route logic clear without error handling noise
+
+### 8. **Standardized API Response Format**
+
+All successful responses follow consistent structure:
+
+```javascript
+{
+  statusCode: 200,
+  data: { /* actual data */ },
+  message: "Operation successful",
+  success: true,
+  meta: { /* pagination, counts, etc */ }
+}
+```
+
+**Rationale**:
+
+- **Client Predictability**: Frontend knows exact response structure
+- **Extensibility**: Meta field allows pagination, counts, timestamps
+- **API Evolution**: Can add fields without breaking clients
+- **Consistency**: Matches error response structure
+
+### 9. **Database Connection Pool Management**
+
+MongoDB connection configured with optimal settings:
+
+```javascript
+// Pool Config:
+maxPoolSize: 10,           // Max connections
+serverSelectionTimeoutMS: 5000,  // Fail fast
+socketTimeoutMS: 45000,          // Long operations
+```
+
+**Rationale**:
+
+- **Performance**: Connection pooling reduces latency
+- **Reliability**: Timeouts prevent hanging connections
+- **Scalability**: Handles concurrent requests efficiently
+- **Monitoring**: Connection events logged for diagnostics
+
+### 10. **Strategic Database Indexing**
+
+Indexes created for common query patterns:
+
+```javascript
+// Single-field indexes:
+email: { index: true }  // User lookups
+role: { index: true }   // Role-based queries
+
+// Compound indexes:
+{ date: -1, type: 1 }   // Date range + type queries
+{ category: 1, type: 1 } // Category + type queries
+```
+
+**Rationale**:
+
+- **Query Performance**: Orders of magnitude faster for large datasets
+- **Targeted**: Only indexes on frequently queried fields
+- **Sort Optimization**: Supports both filter and sort in same query
+- **Trade-off**: Slightly slower writes, much faster reads (acceptable for finance queries)
+
+### 11. **Graceful Shutdown Handling**
+
+Server properly closes connections on termination signals:
+
+```javascript
+process.on("SIGINT", async () => {
+  await server.close(); // Stop accepting new requests
+  await mongoose.connection.close(); // Flush pending operations
+  process.exit(0);
+});
+```
+
+**Rationale**:
+
+- **Data Integrity**: Pending operations complete before shutdown
+- **Clean Deployment**: No requests lost during updates
+- **Resource Cleanup**: Connections properly closed
+- **Production Ready**: Compatible with container orchestration signals
+
+### 12. **Environment Configuration with Validation**
+
+Zod schema validates all env variables at startup:
+
+```javascript
+// Fails immediately if missing/invalid vars
+const env = envSchema.parse(process.env);
+```
+
+**Rationale**:
+
+- **Early Detection**: Configuration errors caught before first request
+- **Type Safety**: Environment values properly typed
+- **Documentation**: Schema serves as env var specification
+- **Security**: Validation prevents injection attacks
+
+---
+
+
+
+
+
+## Installation & Setup
+
+### Prerequisites
+
+- Node.js 16+
+- MongoDB 6.0+ (local or cloud)
+- npm or yarn
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/iamsurajthakur/Zorvyn.git
+cd Zorvyn
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Environment Configuration
+
+```bash
+# Copy example to .env
+cp .env.example .env
+
+# Edit .env with your configuration:
+NODE_ENV=development
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/zorvyn
+
+# JWT Secrets (generate random strings)
+ACCESS_TOKEN_SECRET=your-secret-key-here
+REFRESH_TOKEN_SECRET=your-refresh-secret-here
+
+# Optional
+LOG_LEVEL=debug
+CORS_ORIGIN=http://localhost:3000
+```
+
+### 4. Database Setup
+
+```bash
+# Seed initial data (users, records)
+npm run seed
+
+# Manual MongoDB setup (optional):
+# Connect to MongoDB CLI and create database:
+# use zorvyn
+```
+
+### 5. Start Server
+
+**Development** (with auto-reload):
+
+```bash
+npm run dev
+```
+
+**Production:**
+
+```bash
+npm start
+```
+
+Server runs on `http://localhost:5000` by default.
+
+---
+
+
+
+
+
 ## Error Handling
 
 ### Error Classification
@@ -865,126 +864,6 @@ throw new ApiError(
     password: ["Too short"],
   },
 );
-```
-
----
-
-## Development
-
-### Available Scripts
-
-```bash
-npm run dev   # Start with auto-reload (development)
-npm start     # Start production server
-npm run seed  # Seed database with initial data
-```
-
-### Key Development Patterns
-
-#### Creating a New Endpoint
-
-1. **Define Schema** (`src/schemas/feature.schema.js`):
-
-```javascript
-import { z } from "zod";
-
-export const createFeatureSchema = z.object({
-  body: z.object({
-    name: z.string().min(1),
-    value: z.number().positive(),
-  }),
-});
-```
-
-2. **Create Service** (`src/services/feature.service.js`):
-
-```javascript
-export const createFeature = async (data) => {
-  // Business logic here
-  return await Feature.create(data);
-};
-```
-
-3. **Create Controller** (`src/controllers/feature.controller.js`):
-
-```javascript
-import asyncHandler from "../utils/asyncHandler.js";
-
-export const createFeature = asyncHandler(async (req, res) => {
-  const data = req.validatedData.body;
-  const result = await featureService.createFeature(data);
-  res.status(201).json(new ApiResponse(201, result, "Created"));
-});
-```
-
-4. **Create Route** (`src/routes/feature.route.js`):
-
-```javascript
-import { Router } from "express";
-import { authenticate } from "../middlewares/authenticate.middleware.js";
-import { authorize } from "../middlewares/authorize.middleware.js";
-import validate from "../middlewares/validate.middleware.js";
-import { createFeature } from "../controllers/feature.controller.js";
-import { createFeatureSchema } from "../schemas/feature.schema.js";
-
-const router = Router();
-
-router.post(
-  "/",
-  authenticate,
-  authorize("feature:create"),
-  validate(createFeatureSchema),
-  createFeature,
-);
-
-export default router;
-```
-
-5. **Register Route** (`src/app.js`):
-
-```javascript
-import featureRouter from "./routes/feature.route.js";
-app.use("/api/v1/features", featureRouter);
-```
-
-#### Adding New Permission
-
-1. Add to `src/constants/permissions.js`:
-
-```javascript
-export const PERMISSIONS = {
-  FEATURE_READ: "feature:read",
-  FEATURE_CREATE: "feature:create",
-};
-```
-
-2. Update RBAC in `src/config/rbac.js`:
-
-```javascript
-export const ROLE_PERMISSIONS = {
-  ANALYST: [PERMISSIONS.FEATURE_READ],
-  ADMIN: [PERMISSIONS.FEATURE_READ, PERMISSIONS.FEATURE_CREATE],
-};
-```
-
-3. Use in routes:
-
-```javascript
-router.post("/features", authorize("feature:create"), controller);
-```
-
-### Testing
-
-While unit tests aren't included, the architecture supports it:
-
-```javascript
-// Services are testable (no HTTP layer dependency)
-describe("recordService", () => {
-  it("should create a record", async () => {
-    const record = await recordService.createRecord(data);
-    expect(record.amount).toBe(5000);
-  });
-});
 ```
 
 ---
@@ -1050,39 +929,3 @@ LOG_LEVEL=debug                  # debug|info|warn|error
 ```
 
 ---
-
-## License
-
-ISC License - See LICENSE file for details
-
----
-
-## Contributing
-
-1. Create a feature branch
-2. Follow the vertical slice pattern
-3. Add validation schemas
-4. Implement service layer
-5. Create controller
-6. Register routes
-7. Test manually via API
-
----
-
-## Support
-
-For issues and questions, open an issue on [GitHub](https://github.com/iamsurajthakur/Zorvyn/issues)
-
----
-
-## Author
-
-**Suraj Thakur**
-
-- GitHub: [@iamsurajthakur](https://github.com/iamsurajthakur)
-- Repository: [Zorvyn](https://github.com/iamsurajthakur/Zorvyn)
-
----
-
-**Last Updated**: April 2024
-**Version**: 1.0.0
